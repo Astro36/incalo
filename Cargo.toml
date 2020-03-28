@@ -1,18 +1,6 @@
-[package]
-name = "incalo-server"
-version = "0.1.0"
-authors = ["Seungjae Park <astro.psj@gmail.com>"]
-edition = "2018"
-description = ""
-documentation = "https://docs.rs/incalo-server"
-readme = "README.md"
-repository = "https://github.com/incalc-server/incalo"
-license = "Apache-2.0"
-publish = false
-
-[dependencies]
-hyper = "0.13"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-serde_urlencoded = "0.6"
-tokio = { version = "0.2", features = ["full"] }
+[workspace]
+members = [
+    "incalo_client",
+    "incalo_server",
+    "incalo_test",
+]
