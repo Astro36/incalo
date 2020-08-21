@@ -9,6 +9,9 @@ async fn process(mut stream: TcpStream) -> io::Result<()> {
 
     let now = OffsetDateTime::now_utc();
 
+    let mut buf = vec![0u8; 1024];
+    stream.read(&mut buf).await?;
+
     let msg = "Hello, World!";
     let res = format!(
         "HTTP/1.1 200 Ok\r\n\
@@ -37,9 +40,7 @@ async fn main() -> io::Result<()> {
 
     while let Some(stream) = incoming.next().await {
         let stream = stream?;
-        task::spawn(async {
-            process(stream).await.unwrap();
-        });
+        task::spawn(process(stream));
     }
 
     Ok(())
