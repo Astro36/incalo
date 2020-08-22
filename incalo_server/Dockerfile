@@ -7,10 +7,7 @@ COPY . .
 
 RUN cargo build --release
 
-FROM alpine:latest
-
-RUN apk add --no-cache tzdata
-ENV TZ Asia/Seoul
+FROM scratch
 
 WORKDIR /usr/local/bin/incalo
 COPY --from=builder /usr/src/incalo/target/release/incalo-server .
