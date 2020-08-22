@@ -5,8 +5,8 @@
 - `GET /signin/oauth`
 - `GET /signin/oauth/consent`
 - `GET /signin/oauth/authorize`
-- `POST /api/v1/oauth`
-- `POST /api/v1/oauth/token`
+- `POST /api/oauth`
+- `POST /api/oauth/token`
 
 ## Overview
 
@@ -14,11 +14,11 @@
 
 1. [로그인]() 버튼 클릭(`state` 생성)
 2. (브라우저) `GET /signin/oauth`(`state` 전달) 페이지(로그인 폼 페이지)로 이동
-3. (브라우저) 사용자 정보를 입력받으면 `POST /api/v1/oauth`에 정보를 전송하고 서버로부터 HttpOnly 쿠키로 `incalo_sid`(session_id)를 받음
+3. (브라우저) 사용자 정보를 입력받으면 `POST /api/oauth`에 정보를 전송하고 서버로부터 HttpOnly 쿠키로 `incalo_sid`(session_id)를 받음
 4. 정상적(200)으로 응답을 받았다면 `GET /signin/oauth/consent`(`incalo_sid` 전송)페이지로 이동해 사용자에게 권한과 관련된 내용을 확인받음(2회차부터는 확인 없이 다음 단계로 넘어감)
 5. `GET /signin/oauth/authorize` 페이지로 이동(302 Found 반환)
 6. 이어서 초기에 지정한 리다이렉션 URI(`state` 전달)로 이동함(여기서 `state` 비교함)
-7. URI의 쿼리스트링에서 `code`을 찾아 `POST /api/v1/oauth/token`에 전송함(반환된 `access_token`은 `localstorage`에 저장)
+7. URI의 쿼리스트링에서 `code`을 찾아 `POST /api/oauth/token`에 전송함(반환된 `access_token`은 `localstorage`에 저장)
 8. 정상적(200)으로 응답을 받았다면 로그인이 완료된 것으로 간주
 9. 이제 API 사용 시 `access_token`는 자동으로 요청 헤더에 들어감
 
@@ -28,7 +28,7 @@
 
 로그인 페이지
 
-사용자에게 `id`와 `password`를 입력받아 `POST /api/v1/oauth`에 Ajax로 전송해 로그인을 시도한다.
+사용자에게 `id`와 `password`를 입력받아 `POST /api/oauth`에 Ajax로 전송해 로그인을 시도한다.
 로그인 성공(200 Ok)를 받았다면 `GET /signin/oauth/consent`으로 이동한다.
 
 #### Input
@@ -83,7 +83,7 @@ Cookies:
 
 - `incalo_sid`: 로그인 세션 아이디
 
-### POST /api/v1/oauth
+### POST /api/oauth
 
 `id`와 `password`로 로그인을 하고 `incalo_sid`를 HttpOnly 쿠키로 반환한다.
 
@@ -104,7 +104,7 @@ HTTP/1.1 200 Ok
 Set-Cookie: incalo_sid=aaa.bbb.ccc; HttpOnly
 ```
 
-### POST /api/v1/oauth/token
+### POST /api/oauth/token
 
 #### Request
 

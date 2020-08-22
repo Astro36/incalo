@@ -1,47 +1,20 @@
 use async_std::io;
-use async_std::net::{TcpListener, TcpStream};
-use async_std::prelude::*;
-use async_std::task;
-use time::OffsetDateTime;
+use tide::log;
 
-async fn process(mut stream: TcpStream) -> io::Result<()> {
-    println!("Accepted from: {}", stream.peer_addr()?);
-
-    let now = OffsetDateTime::now_utc();
-
-    let mut buf = vec![0u8; 1024];
-    stream.read(&mut buf).await?;
-
-    let msg = "Hello, World!";
-    let res = format!(
-        "HTTP/1.1 200 Ok\r\n\
-        Date: {}\r\n\
-        Server: incalo\r\n\
-        Content-Type: text/plain\r\n\
-        Content-Length: {}\r\n\
-        \r\n\
-        {}",
-        now.format("%a, %d %b %Y %H:%M:%S GMT"),
-        msg.len(),
-        msg
-    );
-
-    stream.write_all(res.as_bytes()).await?;
-
-    Ok(())
-}
+mod routes;
+mod services;
 
 #[async_std::main]
 async fn main() -> io::Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:8080").await?;
-    println!("Listening on {}", listener.local_addr()?);
+    #[cfg(debug_assertions)]
+    log::start();
 
-    let mut incoming = listener.incoming();
+    let mut app = tide::new();
 
-    while let Some(stream) = incoming.next().await {
-        let stream = stream?;
-        task::spawn(process(stream));
-    }
+    app.at("/api/oauth").post(routes::api::sign_in);
+    app.at("/api/oauth/token")
+        .post(routes::api::create_access_token);
 
+    app.listen("127.0.0.1:8080").await?;
     Ok(())
 }
