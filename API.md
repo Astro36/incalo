@@ -5,8 +5,9 @@
 - `GET /signin/oauth`
 - `GET /signin/oauth/consent`
 - `GET /signin/oauth/authorize`
-- `POST /api/v1/oauth`
-- `POST /api/v1/oauth/token`
+- `POST /api/oauth`
+- `POST /api/oauth/token`
+- `POST /api/user/logout`
 
 ## Overview
 
@@ -134,13 +135,10 @@ Pragma: no-cache
 {
   "access_token": "2YotnFZFEjr1zCsicMWpAA",
   "token_type": "bearer",
-  "expires_in": 3600,
-  "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
-  "scope": "scope"
+  "expires_in": 3600
 }
 ```
 
 - `access_token`: (필수) 리소스 접근 토큰
 - `token_type`: (필수) 토큰 종류(ex. Bearer)
 - `expires_in`: (권장) 리소스 접근 토큰의 수명(초)
-- `refresh_token`: (선택) 리소스 접근 토큰 재발급 토큰
