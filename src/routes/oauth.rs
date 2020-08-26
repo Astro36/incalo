@@ -3,14 +3,30 @@ use serde_json::json;
 use tide::http::{headers, mime, Cookie};
 use tide::{Redirect, Request, Response, StatusCode};
 
-macro_rules! oauth_error {
-    ($error:literal) => {
-        Response::builder(StatusCode::BadRequest)
+macro_rules! oauth_response {
+    ($status_code:expr, $mime:expr, $body:expr) => {
+        Response::builder($status_code)
             .header(headers::CACHE_CONTROL, "no-store")
             .header(headers::PRAGMA, "no-cache")
-            .content_type(mime::FORM)
-            .body(format!("error={}", $error))
+            .content_type($mime)
+            .body($body)
             .build()
+    };
+}
+
+macro_rules! oauth_ok {
+    ($body:expr) => {
+        oauth_response!(StatusCode::Ok, mime::JSON, $body)
+    };
+}
+
+macro_rules! oauth_error {
+    ($error:literal) => {
+        oauth_response!(
+            StatusCode::BadRequest,
+            mime::FORM,
+            format!("error={}", $error)
+        )
     };
 }
 
@@ -48,12 +64,7 @@ pub async fn sign_in(mut req: Request<()>) -> tide::Result {
                 .secure(!cfg!(debug_assertions))
                 .finish();
 
-            let mut res = Response::builder(StatusCode::Ok)
-                .header(headers::CACHE_CONTROL, "no-store")
-                .header(headers::PRAGMA, "no-cache")
-                .content_type(mime::JSON)
-                .body(json!({"consent": true }))
-                .build();
+            let mut res = oauth_ok!(json!({"consent": true }));
             res.insert_cookie(cookie);
 
             Ok(res)
@@ -94,18 +105,11 @@ pub async fn request_access_token(mut req: Request<()>) -> tide::Result {
             let access_token = "aaa.bbb.ccc";
             let expires_in = 3600;
 
-            let body = json!({
+            let res = oauth_ok!(json!({
                 "access_token": access_token,
                 "token_type": "bearer",
                 "expires_in": expires_in,
-            });
-
-            let res = Response::builder(StatusCode::Ok)
-                .header(headers::CACHE_CONTROL, "no-store")
-                .header(headers::PRAGMA, "no-cache")
-                .content_type(mime::JSON)
-                .body(body)
-                .build();
+            }));
 
             Ok(res)
         }
