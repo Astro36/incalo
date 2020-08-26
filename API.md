@@ -2,12 +2,10 @@
 
 ## Index
 
-- `GET /signin/oauth`
-- `GET /signin/oauth/consent`
-- `GET /signin/oauth/authorize`
-- `POST /api/oauth`
-- `POST /api/oauth/token`
-- `POST /api/user/logout`
+- `POST /api/v1/oauth`
+- `GET /api/v1/oauth/authorize`
+- `POST /api/v1/oauth/token`
+- `POST /api/v1/users/logout`
 
 ## Overview
 
@@ -17,7 +15,7 @@
 2. (브라우저) `GET /signin/oauth`(`state` 전달) 페이지(로그인 폼 페이지)로 이동
 3. (브라우저) 사용자 정보를 입력받으면 `POST /api/v1/oauth`에 정보를 전송하고 서버로부터 HttpOnly 쿠키로 `incalo_sid`(session_id)를 받음
 4. 정상적(200)으로 응답을 받았다면 `GET /signin/oauth/consent`(`incalo_sid` 전송)페이지로 이동해 사용자에게 권한과 관련된 내용을 확인받음(2회차부터는 확인 없이 다음 단계로 넘어감)
-5. `GET /signin/oauth/authorize` 페이지로 이동(302 Found 반환)
+5. `GET /api/v1/oauth/authorize` 페이지로 이동(302 Found 반환)
 6. 이어서 초기에 지정한 리다이렉션 URI(`state` 전달)로 이동함(여기서 `state` 비교함)
 7. URI의 쿼리스트링에서 `code`을 찾아 `POST /api/v1/oauth/token`에 전송함(반환된 `access_token`은 `localstorage`에 저장)
 8. 정상적(200)으로 응답을 받았다면 로그인이 완료된 것으로 간주
@@ -38,7 +36,7 @@ Query String Parameters:
 
 - `response_type`: (필수) `code`만 허용
 - `client_id`: (필수) 클라이언트 식별자
-- `redirect_uri`: (선택) 로그인 성공시 리다이렉트될 URI
+- `redirect_uri`: (필수) 로그인 성공시 리다이렉트될 URI
 - `state`: (필수) [CSRF 공격](https://en.wikipedia.org/wiki/Cross-site_request_forgery) 보호용 값
 
 ### GET /signin/oauth/consent
@@ -56,7 +54,7 @@ Query String Parameters:
 
 - `response_type`: (필수) `code`만 허용
 - `client_id`: (필수) 클라이언트 식별자
-- `redirect_uri`: (선택) 로그인 성공시 리다이렉트될 URI
+- `redirect_uri`: (필수) 로그인 성공시 리다이렉트될 URI
 - `state`: (필수) [CSRF 공격](https://en.wikipedia.org/wiki/Cross-site_request_forgery) 보호용 값
 
 Cookies:
@@ -77,7 +75,7 @@ Query String Parameters:
 
 - `response_type`: (필수) `code`만 허용
 - `client_id`: (필수) 클라이언트 식별자
-- `redirect_uri`: (선택) 로그인 성공시 리다이렉트될 URI
+- `redirect_uri`: (필수) 로그인 성공시 리다이렉트될 URI
 - `state`: (필수) [CSRF 공격](https://en.wikipedia.org/wiki/Cross-site_request_forgery) 보호용 값
 
 Cookies:
@@ -121,7 +119,7 @@ Query String Parameters:
 
 - `grant_type`: (필수) `authorization_code`만 허용
 - `code`: (필수) 최대 수명 10분의 일회용 인증 코드
-- `redirect_uri`: (선택) 로그인 성공시 리다이렉트될 URI
+- `redirect_uri`: (필수) 인증 코드를 받은 URI
 - `client_id`: (필수) 클라이언트 식별자
 
 #### Response(Success)

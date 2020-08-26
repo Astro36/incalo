@@ -1,6 +1,0 @@
-[workspace]
-members = [
-    "incalo_client",
-    "incalo_server",
-    "incalo_test",
-]

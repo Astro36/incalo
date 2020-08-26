@@ -10,9 +10,12 @@ async fn main() -> io::Result<()> {
 
     let mut app = tide::new();
 
-    app.at("/api/oauth").post(routes::api::oauth::sign_in);
+    app.at("/api/oauth").post(routes::oauth::sign_in);
+    app.at("/api/oauth/authorize")
+        .get(routes::oauth::request_authorization_code);
     app.at("/api/oauth/token")
-        .post(routes::api::oauth::create_access_token);
+        .post(routes::oauth::request_access_token);
+    app.at("/api/users/logout").post(routes::users::logout);
 
     app.listen("127.0.0.1:8080").await?;
     Ok(())
