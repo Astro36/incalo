@@ -5,16 +5,16 @@ use tide::http::{headers, mime, Cookie};
 use tide::{Redirect, Request, Response, StatusCode};
 
 macro_rules! oauth_redirect {
-    ($redirect_uri:expr, $query:expr) => {
+    ($redirect_uri:expr, $query:expr $(,)?) => {
         Redirect::new(format!("{}?{}", $redirect_uri, $query)).into()
     };
     ($query:expr) => {
-        oauth_redirect!(env::var("OAUTH_DEFAULT_REDIRECT").unwrap(), $query);
+        oauth_redirect!(env::var("OAUTH_DEFAULT_REDIRECT").unwrap(), $query)
     };
 }
 
 macro_rules! oauth_response {
-    ($status_code:expr, $body:expr) => {
+    ($status_code:expr, $body:expr $(,)?) => {
         Response::builder($status_code)
             .header(headers::CACHE_CONTROL, "no-store")
             .header(headers::PRAGMA, "no-cache")
@@ -79,7 +79,7 @@ pub async fn request_authorization_code(req: Request<()>) -> tide::Result {
 
             let res = oauth_redirect!(
                 entity.redirect_uri,
-                format!("code={}&state={}", code, entity.state)
+                format!("code={}&state={}", code, entity.state),
             );
 
             Ok(res)
@@ -95,7 +95,7 @@ pub async fn request_access_token(mut req: Request<()>) -> tide::Result {
             if entity.grant_type != "authorization_code" {
                 return Ok(oauth_response!(
                     StatusCode::BadRequest,
-                    json!({ "error": "unsupported_grant_type" })
+                    json!({ "error": "unsupported_grant_type" }),
                 ));
             }
 
@@ -108,14 +108,14 @@ pub async fn request_access_token(mut req: Request<()>) -> tide::Result {
                     "access_token": access_token,
                     "token_type": "bearer",
                     "expires_in": expires_in,
-                })
+                }),
             );
 
             Ok(res)
         }
         Err(_) => Ok(oauth_response!(
             StatusCode::BadRequest,
-            json!({ "error": "invalid_request" })
+            json!({ "error": "invalid_request" }),
         )),
     }
 }
