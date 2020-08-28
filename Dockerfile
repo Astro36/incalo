@@ -1,6 +1,6 @@
 FROM rust:alpine AS builder
 
-RUN apk add --no-cache build-base
+RUN apk add --no-cache build-base openssl-dev
 
 WORKDIR /usr/src/incalo
 COPY . .

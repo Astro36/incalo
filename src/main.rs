@@ -1,13 +1,10 @@
 use async_std::io;
-use dotenv::dotenv;
 use tide::log;
 
 mod routes;
 
 #[async_std::main]
 async fn main() -> io::Result<()> {
-    dotenv().ok();
-
     #[cfg(debug_assertions)]
     log::start();
 

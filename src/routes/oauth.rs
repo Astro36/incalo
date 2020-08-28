@@ -9,7 +9,7 @@ macro_rules! oauth_redirect {
         Redirect::new(format!("{}?{}", $redirect_uri, $query)).into()
     };
     ($query:expr) => {
-        oauth_redirect!(env::var("OAUTH_DEFAULT_REDIRECT").unwrap(), $query)
+        oauth_redirect!(env::var("OAUTH_DEFAULT_REDIRECT_URI").unwrap(), $query)
     };
 }
 
