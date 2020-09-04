@@ -1,6 +1,7 @@
 use sqlx::mysql::MySqlPool;
 use std::env;
 
+pub mod auth;
 pub mod routes;
 
 #[derive(Clone)]

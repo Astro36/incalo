@@ -1,4 +1,4 @@
-use crate::Request;
+use crate::{auth, Request};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::env;
@@ -53,7 +53,8 @@ pub async fn login(mut req: Request) -> tide::Result {
         Ok(entity) => {
             dbg!(&entity.id, &entity.password);
 
-            let sid = "aaa.bbb.ccc";
+            let sid = auth::create_sid(entity.id)?;
+            dbg!(&sid);
 
             let cookie = Cookie::build("incalo_sid", sid)
                 .secure(!cfg!(debug_assertions))
@@ -76,7 +77,20 @@ pub async fn request_authorization_code(req: Request) -> tide::Result {
                 return Ok(oauth_redirect!("error=unsupported_response_type"));
             }
 
-            let code = "aaa.bbb.ccc";
+            let sid = req.cookie("incalo_sid");
+            if sid.is_none() {
+                return Ok(oauth_redirect!("error=unauthorized_client"));
+            }
+
+            let sid = auth::parse_sid(sid.unwrap().value());
+            if sid.is_err() {
+                return Ok(oauth_redirect!("error=unauthorized_client"));
+            }
+
+            let sid = sid.unwrap();
+            dbg!(&sid.sub);
+
+            let code = auth::create_authorization_code(sid.sub)?;
 
             let res = oauth_redirect!(
                 entity.redirect_uri,
@@ -100,17 +114,25 @@ pub async fn request_access_token(mut req: Request) -> tide::Result {
                 ));
             }
 
-            let access_token = "aaa.bbb.ccc";
-            let expires_in = 3600;
+            let user_id = auth::parse_authorization_code(entity.code);
+            if user_id.is_err() {
+                return Ok(oauth_response!(
+                    StatusCode::BadRequest,
+                    json!({ "error": "invalid_grant" }),
+                ));
+            }
 
-            let res = oauth_response!(
-                StatusCode::Ok,
-                json!({
-                    "access_token": access_token,
-                    "token_type": "bearer",
-                    "expires_in": expires_in,
-                }),
-            );
+            let user_id = user_id.unwrap();
+            if false {
+                return Ok(oauth_response!(
+                    StatusCode::Unauthorized,
+                    json!({ "error": "invalid_client" }),
+                ));
+            }
+
+            let access_token = auth::create_access_token(user_id, entity.client_id)?;
+
+            let res = oauth_response!(StatusCode::Ok, access_token);
 
             Ok(res)
         }
