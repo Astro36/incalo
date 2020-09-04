@@ -1,25 +1,26 @@
+use crate::Request;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::env;
 use tide::http::{headers, mime, Cookie};
-use tide::{Redirect, Request, Response, StatusCode};
+use tide::{Redirect, Response, StatusCode};
 
 macro_rules! oauth_redirect {
     ($redirect_uri:expr, $query:expr $(,)?) => {
         Redirect::new(format!("{}?{}", $redirect_uri, $query)).into()
     };
     ($query:expr) => {
-        oauth_redirect!(env::var("OAUTH_DEFAULT_REDIRECT_URI").unwrap(), $query)
+        oauth_redirect!(env::var("OAUTH_DEFAULT_REDIRECT_URI")?, $query)
     };
 }
 
 macro_rules! oauth_response {
-    ($status_code:expr, $body:expr $(,)?) => {
+    ($status_code:expr, $json:expr $(,)?) => {
         Response::builder($status_code)
             .header(headers::CACHE_CONTROL, "no-store")
             .header(headers::PRAGMA, "no-cache")
             .content_type(mime::JSON)
-            .body($body)
+            .body($json)
             .build()
     };
 }
@@ -47,7 +48,7 @@ struct RequestTokenEntity {
 }
 
 // POST /api/oauth
-pub async fn login(mut req: Request<()>) -> tide::Result {
+pub async fn login(mut req: Request) -> tide::Result {
     match req.body_form::<LoginEntity>().await {
         Ok(entity) => {
             dbg!(&entity.id, &entity.password);
@@ -68,7 +69,7 @@ pub async fn login(mut req: Request<()>) -> tide::Result {
 }
 
 // GET /api/oauth/authorize
-pub async fn request_authorization_code(req: Request<()>) -> tide::Result {
+pub async fn request_authorization_code(req: Request) -> tide::Result {
     match req.query::<RequestCodeEntity>() {
         Ok(entity) => {
             if entity.response_type != "code" {
@@ -89,7 +90,7 @@ pub async fn request_authorization_code(req: Request<()>) -> tide::Result {
 }
 
 // POST /api/oauth/token
-pub async fn request_access_token(mut req: Request<()>) -> tide::Result {
+pub async fn request_access_token(mut req: Request) -> tide::Result {
     match req.body_form::<RequestTokenEntity>().await {
         Ok(entity) => {
             if entity.grant_type != "authorization_code" {

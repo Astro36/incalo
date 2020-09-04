@@ -1,14 +1,34 @@
-use async_std::io;
-use tide::log;
+use sqlx::mysql::MySqlPool;
+use std::env;
 
-mod routes;
+pub mod routes;
+
+#[derive(Clone)]
+pub struct State {
+    pool: MySqlPool,
+}
+
+pub type Request = tide::Request<State>;
+pub type Server = tide::Server<State>;
 
 #[async_std::main]
-async fn main() -> io::Result<()> {
-    #[cfg(debug_assertions)]
-    log::start();
+async fn main() -> tide::Result<()> {
+    let mysql_uri = format!(
+        "mysql://{}:{}@{}:{}/{}",
+        env::var("MYSQL_USER")?,
+        env::var("MYSQL_PASSWORD")?,
+        env::var("MYSQL_HOST")?,
+        env::var("MYSQL_PORT")?,
+        env::var("MYSQL_DATABASE")?,
+    );
 
-    let mut app = tide::new();
+    let pool = MySqlPool::connect(&mysql_uri).await?;
+    let state = State { pool };
+
+    let mut app = tide::with_state(state);
+
+    #[cfg(debug_assertions)]
+    tide::log::start();
 
     app.at("/api/oauth").post(routes::oauth::login);
     app.at("/api/oauth/authorize")
