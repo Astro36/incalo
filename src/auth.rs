@@ -1,4 +1,4 @@
-use crate::model::IdTokenPayload;
+use crate::IdTokenPayload;
 use jsonwebtoken::errors::Result as JwtResult;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 

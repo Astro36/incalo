@@ -1,17 +1,12 @@
-use crate::model::{Department, Gender, IdTokenPayload, User};
-use crate::{auth, Request, State};
+use crate::{auth, Department, Gender, IdTokenPayload, Request, State, User};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::env;
 use tide::http::{headers, mime, Cookie};
 use tide::{Redirect, Response, StatusCode};
 
 macro_rules! oauth_redirect {
     ($redirect_uri:expr, $query:expr $(,)?) => {
         Redirect::new(format!("{}?{}", $redirect_uri, $query)).into()
-    };
-    ($query:expr) => {
-        oauth_redirect!(env::var("OAUTH_DEFAULT_REDIRECT_URI")?, $query)
     };
 }
 
@@ -72,20 +67,31 @@ pub async fn login(mut req: Request) -> tide::Result {
 
 // GET /api/oauth/authorize
 pub async fn request_authorization_code(req: Request) -> tide::Result {
+    let State { config, pool: _ } = req.state();
+
     match req.query::<RequestCodeEntity>() {
         Ok(entity) => {
             if entity.response_type != "code" {
-                return Ok(oauth_redirect!("error=unsupported_response_type"));
+                return Ok(oauth_redirect!(
+                    &config.oauth_default_redirect_uri,
+                    "error=unsupported_response_type"
+                ));
             }
 
             let sid = req.cookie("incalo_sid");
             if sid.is_none() {
-                return Ok(oauth_redirect!("error=unauthorized_client"));
+                return Ok(oauth_redirect!(
+                    &config.oauth_default_redirect_uri,
+                    "error=unauthorized_client"
+                ));
             }
 
             let user_id: Result<String, async_std::io::Error> = Ok("".to_string());
             if user_id.is_err() {
-                return Ok(oauth_redirect!("error=unauthorized_client"));
+                return Ok(oauth_redirect!(
+                    &config.oauth_default_redirect_uri,
+                    "error=unauthorized_client"
+                ));
             }
 
             let user_id = user_id.unwrap();
@@ -100,7 +106,10 @@ pub async fn request_authorization_code(req: Request) -> tide::Result {
 
             Ok(res)
         }
-        Err(_) => Ok(oauth_redirect!("error=invalid_request")),
+        Err(_) => Ok(oauth_redirect!(
+            &config.oauth_default_redirect_uri,
+            "error=invalid_request"
+        )),
     }
 }
 
@@ -131,7 +140,7 @@ pub async fn request_access_token(mut req: Request) -> tide::Result {
                 ));
             }
 
-            let State { config, pool } = req.state();
+            let State { config, pool: _ } = req.state();
 
             let user = User {
                 id: user_id,
@@ -142,12 +151,12 @@ pub async fn request_access_token(mut req: Request) -> tide::Result {
             };
 
             let payload = IdTokenPayload::new(
-                config.ID_TOKEN_ISSUER.clone(),
+                config.id_token_issuer.clone(),
                 "client_id".to_string(),
-                config.ID_TOKEN_EXPIRES_IN,
+                config.id_token_expires_in,
                 user,
             );
-            let id_token = auth::encode_id_token(&payload, &config.ID_TOKEN_SECRET)?;
+            let id_token = auth::encode_id_token(&payload, &config.id_token_secret)?;
 
             let access_token = "qwertyuiop1234567890".to_string();
             let refresh_token = "qwertyuiop1234567890".to_string();
@@ -158,7 +167,7 @@ pub async fn request_access_token(mut req: Request) -> tide::Result {
                     "access_token": access_token,
                     "token_type": "Bearer",
                     "refresh_token": refresh_token,
-                    "expires_in": config.ID_TOKEN_EXPIRES_IN,
+                    "expires_in": config.id_token_expires_in,
                     "id_token": id_token,
                 }),
             );
