@@ -1,4 +1,5 @@
-use crate::{auth, Request};
+use crate::model::{Department, Gender, IdTokenPayload, User};
+use crate::{auth, Request, State};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::env;
@@ -53,7 +54,7 @@ pub async fn login(mut req: Request) -> tide::Result {
         Ok(entity) => {
             dbg!(&entity.id, &entity.password);
 
-            let sid = auth::create_sid(entity.id)?;
+            let sid = "qwertyuiop1234567890".to_string();
             dbg!(&sid);
 
             let cookie = Cookie::build("incalo_sid", sid)
@@ -82,15 +83,15 @@ pub async fn request_authorization_code(req: Request) -> tide::Result {
                 return Ok(oauth_redirect!("error=unauthorized_client"));
             }
 
-            let sid = auth::parse_sid(sid.unwrap().value());
-            if sid.is_err() {
+            let user_id: Result<String, async_std::io::Error> = Ok("".to_string());
+            if user_id.is_err() {
                 return Ok(oauth_redirect!("error=unauthorized_client"));
             }
 
-            let sid = sid.unwrap();
-            dbg!(&sid.sub);
+            let user_id = user_id.unwrap();
+            dbg!(&user_id);
 
-            let code = auth::create_authorization_code(sid.sub)?;
+            let code = "qwertyuiop1234567890".to_string();
 
             let res = oauth_redirect!(
                 entity.redirect_uri,
@@ -114,7 +115,7 @@ pub async fn request_access_token(mut req: Request) -> tide::Result {
                 ));
             }
 
-            let user_id = auth::parse_authorization_code(entity.code);
+            let user_id: Result<String, async_std::io::Error> = Ok("hello".to_string());
             if user_id.is_err() {
                 return Ok(oauth_response!(
                     StatusCode::BadRequest,
@@ -130,9 +131,37 @@ pub async fn request_access_token(mut req: Request) -> tide::Result {
                 ));
             }
 
-            let access_token = auth::create_access_token(user_id, entity.client_id)?;
+            let State { config, pool } = req.state();
 
-            let res = oauth_response!(StatusCode::Ok, access_token);
+            let user = User {
+                id: user_id,
+                email: "hello@example.com".to_string(),
+                name: "Hello".to_string(),
+                gender: Gender::HIDDEN,
+                department: Department::UNK,
+            };
+
+            let payload = IdTokenPayload::new(
+                config.ID_TOKEN_ISSUER.clone(),
+                "client_id".to_string(),
+                config.ID_TOKEN_EXPIRES_IN,
+                user,
+            );
+            let id_token = auth::encode_id_token(&payload, &config.ID_TOKEN_SECRET)?;
+
+            let access_token = "qwertyuiop1234567890".to_string();
+            let refresh_token = "qwertyuiop1234567890".to_string();
+
+            let res = oauth_response!(
+                StatusCode::Ok,
+                json!({
+                    "access_token": access_token,
+                    "token_type": "Bearer",
+                    "refresh_token": refresh_token,
+                    "expires_in": config.ID_TOKEN_EXPIRES_IN,
+                    "id_token": id_token,
+                }),
+            );
 
             Ok(res)
         }
