@@ -1,0 +1,16 @@
+[package]
+name = "incalo"
+version = "1.0.0"
+authors = ["Seungjae Park <astro.psj@gmail.com>"]
+edition = "2021"
+rust-version = "1.56"
+description = "Inha Univ. Single Sign-On Service"
+repository = "https://github.com/incalc/incalo"
+license = "Apache-2.0"
+keywords = ["inha-university", "axum", "single-sign-on", "api", "server"]
+categories = ["web-programming::http-server"]
+publish = false
+
+[dependencies]
+axum = "0.3.1"
+tokio = { version = "1.13.0", features = ["full"] }
