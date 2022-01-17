@@ -1,18 +1,21 @@
 use axum::routing::get;
 use axum::{AddExtensionLayer, Router, Server};
-use deadpool_postgres::{Config, Runtime};
-use std::net::SocketAddr;
-use tokio_postgres::NoTls;
+use qp_postgres::tokio_postgres::NoTls;
+use qp_postgres::PgPool;
+
+const DB_URI: &str = "postgresql://postgres:postgres@localhost/incalo";
+const SERVER_ADDRESS: &str = "0.0.0.0:3000";
+
+type DbPool = PgPool<NoTls>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut config = Config::new();
-    config.dbname = Some("incalo".to_string());
-    let pool = config.create_pool(Some(Runtime::Tokio1), NoTls)?;
+    let config = DB_URI.parse().unwrap();
+    let pool = qp_postgres::connect(config, NoTls, 8);
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .layer(AddExtensionLayer::new(pool));
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+    let addr = SERVER_ADDRESS.parse().unwrap();
     Server::bind(&addr)
         .serve(app.into_make_service())
         .await
