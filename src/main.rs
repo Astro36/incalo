@@ -1,3 +1,4 @@
+use anyhow::Result;
 use axum::routing::get;
 use axum::{AddExtensionLayer, Router, Server};
 use qp_postgres::tokio_postgres::NoTls;
@@ -9,16 +10,13 @@ const SERVER_ADDRESS: &str = "0.0.0.0:3000";
 type DbPool = PgPool<NoTls>;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config = DB_URI.parse().unwrap();
+async fn main() -> Result<()> {
+    let config = DB_URI.parse()?;
     let pool = qp_postgres::connect(config, NoTls, 8);
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .layer(AddExtensionLayer::new(pool));
-    let addr = SERVER_ADDRESS.parse().unwrap();
-    Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let addr = SERVER_ADDRESS.parse()?;
+    Server::bind(&addr).serve(app.into_make_service()).await?;
     Ok(())
 }
